@@ -29,7 +29,25 @@ A JS library to convert a JSON Array to an HTML table. Features:
                 },
                 "notes"
             ],
-            "rows": [ ... ]
+            "rows": [
+                {
+                    "name": "Creality PETG Clear",
+                    "tested-on": "Bambu A1",
+                    "temp": "\"Generic PETG\" (255/80)",
+                    "flow-rate": 0.95,
+                    "price": "18-22",
+                    "notes": "Some stringing, but pretty nice overall."
+                },
+                {
+                    "name": "^^",
+                    "tested-on": "Ender 3 V3 SE",
+                    "temp": "235/70",
+                    "temp-layer1": "230/70",
+                    "flow-rate": 1,
+                    "price": "^^",
+                    "notes": "^^"
+                }
+            ]
         }
     </div>
 </div>
