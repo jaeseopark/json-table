@@ -35,16 +35,21 @@ A JS library to convert a JSON Array to an HTML table. Features:
 </div>
 ```
 
-JS:
+Script:
 
-```js
-function renderJsonTables() {
-  $(".json-table").each(function () {
-    const data = JSON.parse($(this).find(".data").text());
-    const table = makeTable(data);
-    $(this).append(table);
-  });
-}
+```html
+<head>
+    <script src=".../json-table.js"></script>
+    <script>
+    function renderJsonTables() {
+        $(".json-table").each(function () {
+            const data = JSON.parse($(this).find(".data").text());
+            const table = makeTable(data);
+            $(this).append(table);
+        });
+    }
+    </script>
+</head>
 ```
 
 CSS:
