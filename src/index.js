@@ -114,10 +114,29 @@ function makeTBODY(rows, columns) {
     return tbody;
 }
 
+const expand = (rows, inheritedKeys = []) => {
+    const inheritedMap = inheritedKeys.reduce((acc, key) => {
+        acc[key] = "^^";
+        return acc;
+    }, {});
+    const expandedRows = [];
+    rows.forEach(row => {
+        const { children, ...rest } = { ...inheritedMap, ...row };
+        if (children) {
+            const [firstChild, ...restOfChildren] = expand(children, Object.keys(rest));
+            expandedRows.push({ ...firstChild, ...rest });
+            expandedRows.push(...restOfChildren);
+        } else {
+            expandedRows.push(rest);
+        }
+    });
+    return expandedRows;
+}
+
 function makeTable(data) {
     var table = document.createElement("table");
     table.appendChild(makeTHEAD(data.columns));
-    table.appendChild(makeTBODY(data.rows, data.columns));
+    table.appendChild(makeTBODY(expand(data.rows), data.columns));
     return table;
 }
 
