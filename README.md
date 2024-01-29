@@ -3,6 +3,12 @@
 A JS library to convert a JSON Array to an HTML table. Features:
 * Supports the "^^" rowspan syntax like [`markdown-it-multimd-table`](https://www.npmjs.com/package/markdown-it-multimd-table) does.
 * Supports the "<<" colspan syntax.
+* Supports parent-child rows to automatically apply rowspan values of > 1
+* Supports normalization of units
+
+## Dependencies
+
+* [convert](https://www.npmjs.com/package/convert)
 
 ## Usage
 
