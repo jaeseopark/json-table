@@ -70,7 +70,12 @@ function makeTBODY(rows, columns) {
         columns.forEach(function (column, j) {
             if (column.source) {
                 const sourceJ = columns.findIndex(c => (c.key || c) === column.source);
-                const value = cells[i][sourceJ].value;
+                let value = cells[i][sourceJ].value;
+
+                if (value.label) {
+                    value = value.label;
+                }
+
                 if ((value || "").includes("/")) {
                     const match = value.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
                     if (match) {
