@@ -111,7 +111,7 @@ function makeTBODY(rows, columns) {
                     var delimiter = cell.column.delimiter || ",";
                     cell.value.split(delimiter).forEach(function (colour) {
                         var div = document.createElement("div");
-                        div.setAttribute("style", `background-color: #${colour.trim()}; width: ${swatchSize}px; height: ${swatchSize}px;`);
+                        div.setAttribute("style", `background-color: #${colour.trim()}; width: ${swatchSize}px; height: ${swatchSize}px; border: 1px solid black;`);
                         td.appendChild(div);
                     });
                 } else {
