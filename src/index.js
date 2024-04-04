@@ -63,6 +63,7 @@ function makeTBODY(rows, columns) {
                 visible,
                 rowspan,
                 colspan,
+                column,
                 value,
             });
         });
@@ -105,6 +106,14 @@ function makeTBODY(rows, columns) {
                     a.textContent = cell.value.label;
                     a.className = "is-external-link"
                     td.appendChild(a);
+                } else if (cell.value && cell.column.swatchSize) {
+                    var swatchSize = cell.column.swatchSize;
+                    var delimiter = cell.column.delimiter || ",";
+                    cell.value.split(delimiter).forEach(function (colour) {
+                        var div = document.createElement("div");
+                        div.setAttribute("style", `background-color: #${colour.trim()}; width: ${swatchSize}px; height: ${swatchSize}px;`);
+                        td.appendChild(div);
+                    });
                 } else {
                     td.textContent = cell.value;
                 }
