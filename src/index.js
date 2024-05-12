@@ -72,6 +72,7 @@ function makeTBODY(rows, columns) {
             if (column.source) {
                 const sourceJ = columns.findIndex(c => (c.key || c) === column.source);
                 let value = cells[i][sourceJ].value;
+                const isUnitless = ["ea", "each", "pc", "pcs", "pk", "cnt"].includes(column.normalizer.replace(/[0-9]/g, ''));
 
                 if (value.label) {
                     value = value.label;
@@ -81,11 +82,11 @@ function makeTBODY(rows, columns) {
                     const match = value.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
                     if (match) {
                         const dollar = parseFloat(match[1]);
-                        const amount = parseFloat(match[2] || "1");
+                        const qty = parseFloat(match[2] || "1");
                         const unit = match[3];
                         const normalizerMatch = column.normalizer.match(/([\d.]*)(.+)/);
-                        const normalizedAmount = convert.convert(amount, unit.trim()).to(normalizerMatch[2]);
-                        cells[i][j].value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedAmount).toFixed(1);
+                        const normalizedQty = isUnitless ? qty : convert.convert(qty, unit.trim()).to(normalizerMatch[2]);
+                        cells[i][j].value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty).toFixed(1);
                     }
                 }
             }
