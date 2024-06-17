@@ -19,92 +19,109 @@ function makeTHEAD(columns) {
     return thead;
 }
 
-function makeTBODY(rows, columns) {
-    var tbody = document.createElement("tbody");
-    var cells = [];
+function makeTBODY(data) {
+    const matrix = [];
 
     function increaseRowspanThenReturnValue(i, j) {
-        var cell = cells[i][j];
+        var cell = matrix[i][j];
         if (cell && cell.visible) {
             cell.rowspan += 1;
             return cell.value;
         }
 
-        increaseRowspanThenReturnValue(i - 1, j);
+        return increaseRowspanThenReturnValue(i - 1, j);
     }
 
     function increaseColspanThenReturnValue(i, j) {
-        var cell = cells[i][j];
+        var cell = matrix[i][j];
         if (cell && cell.visible) {
             cell.colspan += 1;
             return cell.value;
         }
 
-        increaseColspanThenReturnValue(i, j - 1);
+        return increaseColspanThenReturnValue(i, j - 1);
     }
 
-    rows.forEach(function (row, i) {
-        cells.push([]);
-        columns.forEach(function (column, j) {
-            var visible = true;
-            var rowspan = 1;
-            var colspan = 1;
-            var value = row[column.key || column] || column.default;
+    const addToMatrix = (rows, parentProps = {}) => {
+        const inheritedMap = Object.keys(parentProps).reduce((acc, key) => {
+            acc[key] = "^^";
+            return acc;
+        }, {});
 
-            if (value === "^^") {
-                visible = false;
-                value = increaseRowspanThenReturnValue(i - 1, j);
-            } else if (value === "<<") {
-                visible = false;
-                value = increaseColspanThenReturnValue(i, j - 1);
+        rows.forEach((row, localRowIndex) => {
+            let { children, ...rest } = { ...parentProps, ...row };
+            if (children) {
+                const relatedColumnNames = data.columns.filter(col => col.source && col.source in rest).map(col => col.key || col);
+                const blankProperties = relatedColumnNames.reduce((acc,key) => {
+                    acc[key] = "";
+                    return acc;
+                }, {});
+                return addToMatrix(children, {...blankProperties, ...rest});
             }
 
-            cells[i].push({
-                visible,
-                rowspan,
-                colspan,
-                column,
-                value,
-            });
-        });
+            if (localRowIndex > 0) {
+                rest = {...rest, ...inheritedMap};
+            }
 
-        columns.forEach(function (column, j) {
-            const cell = cells[i][j];
-            const value = cell.value;
-            if (column.source) {
-                if (!cell.visible) return;
+            const i = matrix.push([]) - 1; // current row index
+            data.columns.forEach(function (column, j) {
+                let value = rest[column.key || column] || column.default;
+                let visible = true;
 
-                const sourceColumn = columns.findIndex(c => (c.key || c) === column.source);
-                let sourceValue = cells[i][sourceColumn].value;
-                const isUnitless = ["ea", "each", "pc", "pcs", "pk", "cnt"].includes(column.normalizer.replace(/[0-9]/g, ''));
-
-                if (sourceValue.label) {
-                    sourceValue = sourceValue.label;
+                if (value === "^^") {
+                    value = increaseRowspanThenReturnValue(i, j);
+                    visible = false;
                 }
 
-                if ((sourceValue || "").includes("/")) {
-                    const match = sourceValue.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
-                    if (match) {
-                        const dollar = parseFloat(match[1]);
-                        const qty = parseFloat(match[2] || "1");
-                        const unit = match[3];
-                        const normalizerMatch = column.normalizer.match(/([\d.]*)(.+)/);
-                        const normalizedQty = isUnitless ? qty : convert.convert(qty, unit.trim()).to(normalizerMatch[2]);
-                        cell.value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty).toFixed(1);
+                if (value === "<<") {
+                    value = increaseColspanThenReturnValue(i, j);
+                    visible = false;
+                }
+
+                if (visible) {
+                    if (column.source) {
+                        const sourceColumnIndex = data.columns.findIndex(c => (c.key || c) === column.source);
+                        let sourceValue = matrix[i][sourceColumnIndex].value;
+                        const isUnitless = ["ea", "each", "pc", "pcs", "pk", "cnt"].includes(column.normalizer.replace(/[0-9]/g, ''));
+        
+                        if (sourceValue.label) {
+                            sourceValue = sourceValue.label;
+                        }
+        
+                        if ((sourceValue || "").includes("/")) {
+                            const match = sourceValue.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
+                            if (match) {
+                                const dollar = parseFloat(match[1]);
+                                const qty = parseFloat(match[2] || "1");
+                                const unit = match[3];
+                                const normalizerMatch = column.normalizer.match(/([\d.]*)(.+)/);
+                                const normalizedQty = isUnitless ? qty : convert.convert(qty, unit.trim()).to(normalizerMatch[2]);
+                                value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty).toFixed(1);
+                            }
+                        }
+                    }
+    
+                    if (value && column.eval) {
+                        const expr = column.eval.replaceAll("\$\{value\}", value);
+                        value = eval(expr);
                     }
                 }
-            }
 
-            if (column.eval && cell.value) {
-                const expr = column.eval.replaceAll("\$\{value\}", value);
-                cell.value = eval(expr);
-            }
-
-            // TODO: variable referencing, etc
+                matrix[i].push({
+                    value,
+                    column,
+                    rowspan: 1,
+                    colspan: 1,
+                    visible,
+                });
+            });
         })
-    });
+    }
 
-    cells.forEach(function (row) {
+    addToMatrix(data.rows);
+
+    var tbody = document.createElement("tbody");
+    matrix.forEach(function (row) {
         let tr = document.createElement("tr");
         row.forEach(function (cell) {
             if (cell.visible) {
@@ -138,29 +155,10 @@ function makeTBODY(rows, columns) {
     return tbody;
 }
 
-const expand = (rows, inheritedKeys = []) => {
-    const inheritedMap = inheritedKeys.reduce((acc, key) => {
-        acc[key] = "^^";
-        return acc;
-    }, {});
-    const expandedRows = [];
-    rows.forEach(row => {
-        const { children, ...rest } = { ...inheritedMap, ...row };
-        if (children) {
-            const [firstChild, ...restOfChildren] = expand(children, Object.keys(rest));
-            expandedRows.push({ ...firstChild, ...rest });
-            expandedRows.push(...restOfChildren);
-        } else {
-            expandedRows.push(rest);
-        }
-    });
-    return expandedRows;
-}
-
 function makeTable(data) {
     var table = document.createElement("table");
     table.appendChild(makeTHEAD(data.columns));
-    table.appendChild(makeTBODY(expand(data.rows), data.columns));
+    table.appendChild(makeTBODY(data));
     return table;
 }
 
