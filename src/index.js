@@ -69,26 +69,35 @@ function makeTBODY(rows, columns) {
         });
 
         columns.forEach(function (column, j) {
+            const cell = cells[i][j];
+            const value = cell.value;
             if (column.source) {
-                const sourceJ = columns.findIndex(c => (c.key || c) === column.source);
-                let value = cells[i][sourceJ].value;
+                if (!cell.visible) return;
+
+                const sourceColumn = columns.findIndex(c => (c.key || c) === column.source);
+                let sourceValue = cells[i][sourceColumn].value;
                 const isUnitless = ["ea", "each", "pc", "pcs", "pk", "cnt"].includes(column.normalizer.replace(/[0-9]/g, ''));
 
-                if (value.label) {
-                    value = value.label;
+                if (sourceValue.label) {
+                    sourceValue = sourceValue.label;
                 }
 
-                if ((value || "").includes("/")) {
-                    const match = value.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
+                if ((sourceValue || "").includes("/")) {
+                    const match = sourceValue.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
                     if (match) {
                         const dollar = parseFloat(match[1]);
                         const qty = parseFloat(match[2] || "1");
                         const unit = match[3];
                         const normalizerMatch = column.normalizer.match(/([\d.]*)(.+)/);
                         const normalizedQty = isUnitless ? qty : convert.convert(qty, unit.trim()).to(normalizerMatch[2]);
-                        cells[i][j].value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty).toFixed(1);
+                        cell.value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty).toFixed(1);
                     }
                 }
+            }
+
+            if (column.eval && cell.value) {
+                const expr = column.eval.replaceAll("\$\{value\}", value);
+                cell.value = eval(expr);
             }
 
             // TODO: variable referencing, etc
