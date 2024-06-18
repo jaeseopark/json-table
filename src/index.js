@@ -117,6 +117,7 @@ function makeTBODY(data) {
                 matrix[i].push({
                     value,
                     column,
+                    row: rest,
                     rowspan: 1,
                     colspan: 1,
                     visible,
@@ -138,6 +139,14 @@ function makeTBODY(data) {
                     a.setAttribute("href", cell.value.url);
                     a.setAttribute("target", "_blank");
                     a.textContent = cell.value.label;
+                    a.className = "is-external-link"
+                    td.appendChild(a);
+                } else if (cell.column.urlSource && cell.row[cell.column.urlSource]) {
+                    const url = cell.row[cell.column.urlSource];
+                    var a = document.createElement("a");
+                    a.setAttribute("href", url);
+                    a.setAttribute("target", "_blank");
+                    a.textContent = cell.value;
                     a.className = "is-external-link"
                     td.appendChild(a);
                 } else if (cell.value && cell.column.swatchSize) {
