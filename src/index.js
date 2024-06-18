@@ -48,19 +48,26 @@ function makeTBODY(data) {
             return acc;
         }, {});
 
-        rows.forEach((row, localRowIndex) => {
-            let { children, ...rest } = { ...parentProps, ...row };
+        rows.forEach((row) => {
+            let { children, ...rest } = {...inheritedMap, ...row};
             if (children) {
-                const relatedColumnNames = data.columns.filter(col => col.source && col.source in rest).map(col => col.key || col);
-                const blankProperties = relatedColumnNames.reduce((acc,key) => {
-                    acc[key] = "";
-                    return acc;
-                }, {});
-                return addToMatrix(children, {...blankProperties, ...rest});
-            }
-
-            if (localRowIndex > 0) {
-                rest = {...rest, ...inheritedMap};
+                const [firstChild] = children;
+                Object.keys(rest)
+                    .forEach(key => {
+                        firstChild[key] = rest[key];
+                        if (key in parentProps) {
+                            rest[key] = "^^";
+                        }
+                    });
+                data.columns
+                    .filter(col => col.source in row)
+                    .map(col => col.key || col)
+                    .forEach((key) => {
+                        firstChild[key] = "";
+                        rest[key] = "";
+                    });
+                addToMatrix(children, rest);
+                return;
             }
 
             const i = matrix.push([]) - 1; // current row index
