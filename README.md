@@ -36,7 +36,7 @@ A JS library to convert a JSON Array to an HTML table. Features:
                 },
                 "price",
                 {
-                    "key": "area",
+                    "key": "ppt",
                     "label": "Price per temp ($⋅in²/W)",
                     "eval": "${price}*${width}*${length}/${power}"
                 },
