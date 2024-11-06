@@ -1,3 +1,7 @@
+const DEFAULT_DECIMALS = 0;
+
+const round = (num, decimals) => parseFloat(num.toFixed(decimals !== undefined ? decimals : DEFAULT_DECIMALS));
+
 function makeTHEAD(columns) {
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -49,7 +53,7 @@ function makeTBODY(data) {
         }, {});
 
         rows.forEach((row) => {
-            let { children, ...rest } = {...inheritedMap, ...row};
+            let { children, ...rest } = { ...inheritedMap, ...row };
             if (children) {
                 const [firstChild] = children;
                 Object.keys(rest)
@@ -90,11 +94,11 @@ function makeTBODY(data) {
                         const sourceColumnIndex = data.columns.findIndex(c => (c.key || c) === column.source);
                         let sourceValue = matrix[i][sourceColumnIndex].value;
                         const isUnitless = ["ea", "each", "pc", "pcs", "pk", "cnt"].includes(column.normalizer.replace(/[0-9]/g, ''));
-        
+
                         if (sourceValue.label) {
                             sourceValue = sourceValue.label;
                         }
-        
+
                         if ((sourceValue || "").includes("/")) {
                             const match = sourceValue.match(/^[$]*([\d.]+)\/([\d.]*)(.+)$/);
                             if (match) {
@@ -103,14 +107,28 @@ function makeTBODY(data) {
                                 const unit = match[3];
                                 const normalizerMatch = column.normalizer.match(/([\d.]*)(.+)/);
                                 const normalizedQty = isUnitless ? qty : convert.convert(qty, unit.trim()).to(normalizerMatch[2]);
-                                value = (dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty).toFixed(1);
+                                value = round(dollar * parseFloat(normalizerMatch[1] || "1") / normalizedQty, column.decimals);
                             }
                         }
                     }
-    
-                    if (value && column.eval) {
-                        const expr = column.eval.replaceAll("\$\{value\}", value);
-                        value = eval(expr);
+
+                    if (column.eval) {
+                        const isSelfReferencing = column.eval.includes("${value}");
+
+                        if (!isSelfReferencing || value) {
+                            let expr = column.eval.replaceAll("\$\{value\}", value);
+                            expr = data.columns.reduce((innerExpr, c, cIndex) => {
+                                // TODO: add support for nested computed fields.
+                                // Also -- cIndex >= j has not been computed yet. no point iterating.
+                                if (cIndex < j) {
+                                    const substr = `\$\{${c.key || c}\}`
+                                    const sourceValue = matrix[i][cIndex].value;
+                                    return innerExpr.replaceAll(substr, sourceValue)
+                                }
+                                return innerExpr;
+                            }, expr);
+                            value = round(eval(expr), column.decimals);
+                        }
                     }
                 }
 
