@@ -17,44 +17,74 @@ A JS library to convert a JSON Array to an HTML table. Features:
     <div class="data invisible">
         {
             "columns": [
-                "name",
+                {
+                    "key": "name",
+                    "label": "Name",
+                    "urlSource": "url"
+                },
+                {
+                    "key": "width",
+                    "label": "Width (in)"
+                },
+                {
+                    "key": "length",
+                    "label": "Length (in)"
+                },
+                {
+                    "key": "power",
+                    "label": "Power (W)"
+                },
                 "price",
                 {
-                    "key": "tested-on",
-                    "label": "Tested On"
-                },
-                "temp",
-                {
-                    "key": "temp-layer1",
-                    "label": "Temp - Layer 1",
-                    "default": "<<"
-                },
-                {
-                    "key": "flow-rate",
-                    "label": "Flow Rate"
+                    "key": "area",
+                    "label": "Price per temp ($⋅in²/W)",
+                    "eval": "${price}*${width}*${length}/${power}"
                 },
                 "notes"
             ],
             "rows": [
                 {
-                    "name": "Creality PETG Clear",
-                    "tested-on": "Bambu A1",
-                    "temp": "\"Generic PETG\" (255/80)",
-                    "flow-rate": 0.95,
-                    "price": {
-                        "label": "18-22",
-                        "url": "https://a.co/d/1XcNZpF"
-                    },
-                    "notes": "Some stringing, but pretty nice overall."
+                    "name": "BEAUTIKEN",
+                    "width": 17,
+                    "length": 33,
+                    "power": 75,
+                    "price": 38,
+                    "url": "https://a.co/d/hnuguj8"
                 },
                 {
-                    "name": "^^",
-                    "tested-on": "Ender 3 V3 SE",
-                    "temp": "235/70",
-                    "temp-layer1": "230/70",
-                    "flow-rate": 1,
-                    "price": "^^",
-                    "notes": "^^"
+                    "name": "VANKADA",
+                    "width": 17,
+                    "length": 33,
+                    "power": 75,
+                    "price": 39,
+                    "notes": "Lots of colour options; power spikes to 125 W",
+                    "url": "https://a.co/d/f8DVSb2"
+                },
+                {
+                    "name": "Snailax",
+                    "width": 17,
+                    "length": 33,
+                    "power": 100,
+                    "price": 50,
+                    "url": "https://a.co/d/2haLmk1"
+                },
+                {
+                    "width": 20,
+                    "length": 40,
+                    "power": 100,
+                    "notes": "Intuitive user interface, good manual",
+                    "children": [
+                        {
+                            "name": "Mefine",
+                            "price": 49,
+                            "url": "https://a.co/d/iVYCEwf"
+                        },
+                        {
+                            "name": "Qfun",
+                            "url": "https://a.co/d/j0AE2CI",
+                            "price": 56
+                        }
+                    ]
                 }
             ]
         }
