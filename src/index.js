@@ -2,21 +2,40 @@ const DEFAULT_DECIMALS = 0;
 
 const round = (num, decimals) => parseFloat(num.toFixed(decimals !== undefined ? decimals : DEFAULT_DECIMALS));
 
-function makeTHEAD(columns) {
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
+const getColumnKeyFromLabel = (label) => {
+    const withoutParenthesis = label.split("(")[0].trim();
+    const withHyphens = withoutParenthesis.replaceAll(/[^a-zA-Z0-9]+/g, "-")
+    return withHyphens.toLowerCase();
+}
 
+function getColumnLabelFromKey(key) {
+    // TODO more advanced logic like splitting
+    return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+const normalizeColumns = (data) => {
+    for (let i = 0; i < data.columns.length; i++) {
+        if (typeof data.columns[i] === "string") {
+            data.columns[i] = {
+                key: data.columns[i]
+            };
+        }
+
+        const column = data.columns[i];
+        if (!column.key) {
+            column.key = getColumnKeyFromLabel(column.label);
+        } else if (!column.label) {
+            column.label = getColumnLabelFromKey(column.key);
+        }
+    }
+}
+
+function makeTHEAD(columns) {
     var thead = document.createElement("thead");
     var tr = document.createElement("tr");
     columns.forEach(function (column) {
         var th = document.createElement("th");
-        if (column.label) {
-            th.textContent = column.label;
-        } else {
-            th.textContent = capitalizeFirstLetter(column);
-        }
-
+        th.textContent = column.label;
         tr.appendChild(th);
     });
     thead.appendChild(tr);
@@ -65,7 +84,7 @@ function makeTBODY(data) {
                     });
                 data.columns
                     .filter(col => col.source in row)
-                    .map(col => col.key || col)
+                    .map(col => col.key)
                     .forEach((key) => {
                         firstChild[key] = "";
                         rest[key] = "";
@@ -76,7 +95,7 @@ function makeTBODY(data) {
 
             const i = matrix.push([]) - 1; // current row index
             data.columns.forEach(function (column, j) {
-                let value = rest[column.key || column] || column.default;
+                let value = rest[column.key] || column.default;
                 let visible = true;
 
                 if (value === "^^") {
@@ -91,7 +110,7 @@ function makeTBODY(data) {
 
                 if (visible) {
                     if (column.source) {
-                        const sourceColumnIndex = data.columns.findIndex(c => (c.key || c) === column.source);
+                        const sourceColumnIndex = data.columns.findIndex(c => (c.key) === column.source);
                         let sourceValue = matrix[i][sourceColumnIndex].value;
                         const isUnitless = ["ea", "each", "pc", "pcs", "pk", "cnt"].includes(column.normalizer.replace(/[0-9]/g, ''));
 
@@ -121,7 +140,7 @@ function makeTBODY(data) {
                                 // TODO: add support for nested computed fields.
                                 // Also -- cIndex >= j has not been computed yet. no point iterating.
                                 if (cIndex < j) {
-                                    const substr = `\$\{${c.key || c}\}`
+                                    const substr = `\$\{${c.key}\}`
                                     const sourceValue = matrix[i][cIndex].value;
                                     return innerExpr.replaceAll(substr, sourceValue)
                                 }
@@ -190,6 +209,8 @@ function makeTBODY(data) {
 }
 
 function makeTable(data) {
+    normalizeColumns(data);
+
     var table = document.createElement("table");
     table.appendChild(makeTHEAD(data.columns));
     table.appendChild(makeTBODY(data));
