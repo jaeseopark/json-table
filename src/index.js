@@ -141,12 +141,19 @@ function makeTBODY(data) {
                                 // Also -- cIndex >= j has not been computed yet. no point iterating.
                                 if (cIndex < j) {
                                     const substr = `\$\{${c.key}\}`
-                                    const sourceValue = matrix[i][cIndex].value;
+                                    const sourceValue = matrix[i][cIndex].value?.label || matrix[i][cIndex].value;
                                     return innerExpr.replaceAll(substr, sourceValue)
                                 }
                                 return innerExpr;
                             }, expr);
-                            value = round(eval(expr), column.decimals);
+                            try {
+                                const resolved = eval(expr)
+                                if (!Number.isNaN(resolved)) {
+                                    value = round(resolved, column.decimals);
+                                }
+                            } catch (e) {
+                                // pass
+                            }
                         }
                     }
                 }
