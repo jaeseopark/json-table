@@ -219,8 +219,14 @@ function makeTable(data) {
     normalizeColumns(data);
 
     var table = document.createElement("table");
-    table.appendChild(makeTHEAD(data.columns));
-    table.appendChild(makeTBODY(data));
+    try {
+        table.appendChild(makeTHEAD(data.columns));
+        table.appendChild(makeTBODY(data));
+    } catch (e) {
+        var pre = document.createElement("pre");
+        pre.textContent = e.toString();
+        table.appendChild(pre);
+    }
     return table;
 }
 
